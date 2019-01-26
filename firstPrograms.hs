@@ -18,7 +18,7 @@ recursiveSum (x:xs) = x + recursiveSum xs
 remove :: (Eq a) => a -> [a] -> [a]
 remove x [] = []
 remove x (h:t) = if h == x then remove x t else h:(remove x t)
-	--remove x l = if (head l) == x then remove x (tail l) else (head l):(remove x (tail l))
+        --remove x l = if (head l) == x then remove x (tail l) else (head l):(remove x (tail l))
 
 -- Patterns (wholeString refers to l:rest) --
 firstLetter :: String -> String
@@ -31,46 +31,44 @@ bmi weight height = weight / (height^2)
 
 bmiTell :: (RealFloat a, Show a) => a -> String
 bmiTell x
-	| x <= 18.5	= "BMI <" ++ (show x) ++ "> is underweight"
-	| x <= 25.0	= "BMI <" ++ (show x) ++ "> is normal"
-	| x <= 30.0	= "BMI <" ++ (show x) ++ "> is overweight"
-	| otherwise	= "BMI <" ++ (show x) ++ "> is obese"
-	{- ^otherwise is defined <otherwise = True> by default 
-	   so this always evaluates to True.
-	   In fact, you could just write < | True > instead -}
+        | x <= 18.5     = "BMI <" ++ (show x) ++ "> is underweight"
+        | x <= 25.0     = "BMI <" ++ (show x) ++ "> is normal"
+        | x <= 30.0     = "BMI <" ++ (show x) ++ "> is overweight"
+        | otherwise     = "BMI <" ++ (show x) ++ "> is obese"
+        {- ^otherwise is defined <otherwise = True> by default 
+           so this always evaluates to True.
+           In fact, you could just write < | True > instead -}
 
 absolute :: (RealFloat a) => a -> a
 absolute x
-	| x < 0		= 0 - x
-	| otherwise	= x
+        | x < 0         = 0 - x
+        | otherwise     = x
 
 -- The *where* keyword --
 heron :: (RealFloat a) => a -> a -> a -> a
 heron a b c = sqrt (s * (s-a) * (s-b) * (s-c))
-	where
-	s = (a+b+c) / 2
+        where   s = (a+b+c) / 2
 
-	{- This is Heron's Formula:
-	   Area of a triangle with sides a b c -}
+        {- This is Heron's Formula:
+           Area of a triangle with sides a b c -}
 
 -- Guards work with *where* as well --
 numOfRealSolutions :: (RealFloat a) => a -> a -> a -> Int
 numOfRealSolutions a b c
-	| a == 0		= error "Not a quadratic"
-	| discriminant > 0	= 2
-	| discriminant == 0	= 1
-	| otherwise		= 0
-		where
-		discriminant = b^2 - 4*a*c
+        | a == 0                = error "Not a quadratic"
+        | discriminant > 0      = 2
+        | discriminant == 0     = 1
+        | otherwise             = 0
+                where
+                discriminant = b^2 - 4*a*c
 
 -- Quick Sort --
 qsort :: (Ord a) => [a] -> [a]
 qsort [] = []
 qsort ls@(x:xs) = qsort smaller ++ equal ++ qsort larger
-	where
-		smaller = [s | s <- ls, s <  x]
-		larger  = [l | l <- ls, l >  x]
-		equal   = [e | e <- ls, e == x]
+        where   smaller = [s | s <- ls, s <  x]
+                larger  = [l | l <- ls, l >  x]
+                equal   = [e | e <- ls, e == x]
 
 -- Pattern Matching: fst/snd for triplets --
 fst3 :: (a,b,c) -> a
@@ -85,75 +83,77 @@ trd3 (_, _, x) = x
 -- Using *let* as an alternative to *where* --
 roots :: (Floating a) => a -> a -> a -> (a, a)
 roots a b c =
-	let	rtDisc = sqrt(b^2 - 4*a*c) --This (after *let*) could've been a new line--
-		twoA = 2*a
-	in	((-b + rtDisc) / twoA, --Same here--
-		 (-b - rtDisc) / twoA)
+        let     rtDisc = sqrt(b^2 - 4*a*c) --This (after *let*) could've been a new line--
+                twoA = 2*a
+        in      ((-b + rtDisc) / twoA, --Same here--
+                 (-b - rtDisc) / twoA)
 
 -- Function Compositions --
 squareThis x = x^2
 tripleAndSquare x = squareThis (tripleThis x)
 squareAndTriple = tripleThis . squareThis
-	{- or, more explicitly:
-	   squareAndTriple x = (tripleThis . squareThis) x -}
-	-- note that the first version of squareAndTriple *still takes x as an argument*!
+        {- or, more explicitly:
+           squareAndTriple x = (tripleThis . squareThis) x -}
+        -- note that the first version of squareAndTriple *still takes x as an argument*!
 
-	-- btw, I just realised that I don't actually have to put `--` at the end of a comment...
-	-- I will still use this format for titles though.
+        -- btw, I just realised that I don't actually have to put `--` at the end of a comment...
+        -- I will still use this format for titles though.
 
 -- Prelude and Importing Modules --
-	{- To import modules (libraries), the following syntax is used:
-	   `import Data.List`
-	   Note that this *has to be at the top* of the file! -}
+        {- To import modules (libraries), the following syntax is used:
+           `import Data.List`
+           Note that this *has to be at the top* of the file! -}
 
-	-- GHCi can also use `:m +Data.List` as shorthand for this
+        -- GHCi can also use `:m +Data.List` as shorthand for this
 
-	{- The `Prelude` core library is loaded by default in
-	   every Haskell program, and we can use its functions,
-	   as demonstrated below -}
+        {- The `Prelude` core library is loaded by default in
+           every Haskell program, and we can use its functions,
+           as demonstrated below -}
 
 revWords :: String -> String
 revWords = unwords . reverse . words
-	-- A.K.A. `revWords x = (unwords . reverse . words) x`
-	-- or     `revWords x = unwords (reverse (words x))`
-	-- or     `revWords x = unwords $ reverse $ words x`
-	-- This reverses the order of words in a string using the three functions (from Prelude)
-		-- `words` splits a string by whitespace
-		-- `reverse` reverses a list
-		-- `unwords` joins the [String] into a single string (opposite of `words`)
+        -- A.K.A. `revWords x = (unwords . reverse . words) x`
+        -- or     `revWords x = unwords (reverse (words x))`
+        -- or     `revWords x = unwords $ reverse $ words x`
+        -- This reverses the order of words in a string using the three functions (from Prelude)
+                -- `words` splits a string by whitespace
+                -- `reverse` reverses a list
+                -- `unwords` joins the [String] into a single string (opposite of `words`)
 
 -- Simple I/O --
 
-	-- Prelude> putStrLn "Hello World!"
-	-- Hello World!
-	-- Prelude> :t putStrLn
-	-- putStrLn :: String -> IO ()
+        -- Prelude> putStrLn "Hello World!"
+        -- Hello World!
+        -- Prelude> :t putStrLn
+        -- putStrLn :: String -> IO ()
 
 -- I/O and `do` Notation --
 main = do
-	putStr "Enter your name: "
-	name <- getLine
-	putStr ("Hello there, " ++ name ++ ".\n")
+        putStr "Enter your name: "
+        name <- getLine
+        putStr ("Hello there, " ++ name ++ ".\n")
 
 triangleArea = do
-	putStr "Base: "
-	base <- getLine
-	putStr "Height: "
-	height <- getLine
-	putStr $ "The area is " ++ show (0.5 * (read base) * (read height)) ++ "\n"
+        putStr "Base: "
+        base <- getLine
+        putStr "Height: "
+        height <- getLine
+        putStr $ "The area is " ++ show (0.5 * (read base) * (read height)) ++ "\n"
 
 guessingGame num = do
-	putStr "Enter your guess: "
-	guess <- getLine
-	compute guess
-		where compute x
-			| (read x) < num	= do
-				putStrLn "Too low!"
-				guessingGame num
-			| (read x) > num	= do
-				putStrLn "Too high!"
-				guessingGame num
-			| otherwise		= do
-				putStrLn $ "Indeed, " ++ (show num) ++ " was the right number!"
+        putStr "Enter your guess: "
+        guess <- getLine
+        compute guess
+                where compute x
+                        | (read x) < num        = do
+                                putStrLn "Too low!"
+                                guessingGame num
+                        | (read x) > num        = do
+                                putStrLn "Too high!"
+                                guessingGame num
+                        | otherwise             = do
+                                putStrLn $ "Indeed, " ++ (show num) ++ " was the right number!"
+
+
 
 -- Continued in the next file --
