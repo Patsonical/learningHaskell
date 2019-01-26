@@ -56,10 +56,10 @@ heron a b c = sqrt (s * (s-a) * (s-b) * (s-c))
 -- Guards work with *where* as well --
 numOfRealSolutions :: (RealFloat a) => a -> a -> a -> Int
 numOfRealSolutions a b c
-	| a == 0			= error "Not a quadratic"
+	| a == 0		= error "Not a quadratic"
 	| discriminant > 0	= 2
 	| discriminant == 0	= 1
-	| otherwise			= 0
+	| otherwise		= 0
 		where
 		discriminant = b^2 - 4*a*c
 
@@ -123,10 +123,37 @@ revWords = unwords . reverse . words
 		-- `unwords` joins the [String] into a single string (opposite of `words`)
 
 -- Simple I/O --
+
 	-- Prelude> putStrLn "Hello World!"
 	-- Hello World!
 	-- Prelude> :t putStrLn
 	-- putStrLn :: String -> IO ()
 
+-- I/O and `do` Notation --
+main = do
+	putStr "Enter your name: "
+	name <- getLine
+	putStr ("Hello there, " ++ name ++ ".\n")
+
+triangleArea = do
+	putStr "Base: "
+	base <- getLine
+	putStr "Height: "
+	height <- getLine
+	putStr $ "The area is " ++ show (0.5 * (read base) * (read height)) ++ "\n"
+
+guessingGame num = do
+	putStr "Enter your guess: "
+	guess <- getLine
+	compute guess
+		where compute x
+			| (read x) < num	= do
+				putStrLn "Too low!"
+				guessingGame num
+			| (read x) > num	= do
+				putStrLn "Too high!"
+				guessingGame num
+			| otherwise		= do
+				putStrLn $ "Indeed, " ++ (show num) ++ " was the right number!"
 
 -- Continued in the next file --
