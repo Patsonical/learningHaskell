@@ -1,4 +1,4 @@
--- More Functions --
+-- Lists II (map) --
 
         -- Specific:
 doubleList :: [Integer] -> [Integer]
@@ -70,4 +70,11 @@ myTake 0 _ = []
 myTake _ [] = []
 myTake n (x:xs) = x : myTake (n-1) xs
 
--- Next: Lists III (folds, comprehentions)
+
+
+-- Lists III (folds, comprehentions) --
+
+        -- A fold is a function that takes a data structure and compresses it
+        -- into a single value (or other data structure).
+        -- e.g. `sum`, `product`, `concat`
+
