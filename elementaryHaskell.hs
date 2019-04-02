@@ -88,4 +88,25 @@ myTake n (x:xs) = x : myTake (n-1) xs
         -- a function returning a boolean (a condition) and a list, and returns
         -- a list of items matching the condition.
 
+        -- Comprehensions are then just syntactic sugar for maps and filters
+                -- This stuff: [x^2 | x <- [0..9], x `mod` 2 == 0]
 
+returnDivisible :: Int -> [Int] -> [Int]
+returnDivisible 0 _ = error "Cannot divide by zero"
+returnDivisible x l = [n | n <- l, n `mod` x == 0]
+
+choosingTails :: [[Int]] -> [[Int]]
+choosingTails l = [tail li | li <- l, li /= [], head li > 5]
+
+compMap :: (a -> b) -> [a] -> [b]
+compMap f l = [f x | x <- l]
+
+compFilter :: (a -> Bool) -> [a] -> [a]
+compFilter f l = [x | x <- l, f x]
+
+doubleOfFirstForEvenSeconds :: [(Int, Int)] -> [Int]
+doubleOfFirstForEvenSeconds ps = map (\x -> 2*(fst x)) $ filter (\x -> snd x `mod` 2 == 0) ps
+
+
+
+-- Type Declarations --
