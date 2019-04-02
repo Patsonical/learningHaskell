@@ -110,3 +110,42 @@ doubleOfFirstForEvenSeconds ps = map (\x -> 2*(fst x)) $ filter (\x -> snd x `mo
 
 
 -- Type Declarations --
+
+        -- `data` initialises a new data type
+        -- `type` creates an alias/alternative name for an existing type
+
+data User = Giggoer String String [String] Bool Bool            -- name email bookmarks pretty_mode dark_mode 
+          | Venue   String String (Int, Int) Int Bool Bool      -- name email location capacity pretty_mode dark_mode 
+
+        -- Declare a new data type User, which can be either a Giggoer or a Venue (WAD2 ftw).
+        -- A Giggoer *contains* two strings, a string list and two booleans
+        -- A Venue *contains* two strings, an (Int, Int) tuple, an Int and two booleans
+
+        -- The | separates the possibilities, and the Giggoer... and Venue... are constructor
+        -- functions for the User type.
+        -- Constructors are normal functions and have types:
+                -- *Main> :t Giggoer
+                -- Giggoer :: String -> String -> [String] -> Bool -> Bool -> User
+                -- *Main> :t Venue
+                -- Venue :: String -> String -> (Int, Int) -> Int -> Bool -> Bool -> User
+        -- and return a User
+
+        -- Note: type names and constructors MUST start with a Capital Letter
+
+giggoer1 = Giggoer "giggoer1" "giggoer1@gmail.com" [] False True
+hydro    = Venue "SSE Hydro" "hydro@sse.co.uk" (0,0) 42 True True
+
+showUser :: User -> String
+showUser (Giggoer name email bookmarks pretty_mode dark_mode) = 
+           "Name: " ++ name
+        ++ ", Email: " ++ email
+        ++ ", Bookmarks: " ++ show bookmarks
+        ++ ", Pretty Mode: " ++ show pretty_mode
+        ++ ", Dark Mode: " ++ show dark_mode
+showUser (Venue name email location capacity pretty_mode dark_mode) = 
+           "Name: " ++ name
+        ++ ", Email: " ++ email
+        ++ ", Location: " ++ show location
+        ++ ", Capacity: " ++ show capacity
+        ++ ", Pretty Mode: " ++ show pretty_mode
+        ++ ", Dark Mode: " ++ show dark_mode
