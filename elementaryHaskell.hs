@@ -78,3 +78,14 @@ myTake n (x:xs) = x : myTake (n-1) xs
         -- into a single value (or other data structure).
         -- e.g. `sum`, `product`, `concat`
 
+        -- Prelude implements two fold functions by default - foldr and foldl.
+        -- There are also *strict* versions of these: foldr' and foldl'
+        -- which force evaluations (instead of being lazy).
+        -- Prelude also implements foldr1 and foldl1, which don't use an explicit
+        -- accumulator, instead simply using the last element of the list.
+
+        -- Another function implemented in Prelude is `filter`, which takes in
+        -- a function returning a boolean (a condition) and a list, and returns
+        -- a list of items matching the condition.
+
+
