@@ -137,15 +137,51 @@ hydro    = Venue "SSE Hydro" "hydro@sse.co.uk" (0,0) 42 True True
 
 showUser :: User -> String
 showUser (Giggoer name email bookmarks pretty_mode dark_mode) = 
-           "Name: " ++ name
+             "Name: " ++ name
         ++ ", Email: " ++ email
         ++ ", Bookmarks: " ++ show bookmarks
         ++ ", Pretty Mode: " ++ show pretty_mode
         ++ ", Dark Mode: " ++ show dark_mode
 showUser (Venue name email location capacity pretty_mode dark_mode) = 
-           "Name: " ++ name
+             "Name: " ++ name
         ++ ", Email: " ++ email
         ++ ", Location: " ++ show location
         ++ ", Capacity: " ++ show capacity
         ++ ", Pretty Mode: " ++ show pretty_mode
         ++ ", Dark Mode: " ++ show dark_mode
+
+
+-- Control Structures --
+
+        -- Skipping over if-statements and guards
+        -- One takeaway: if-statements are expressions, and can be used in-line, anywhere
+        --               whereas guards are NOT expressions (why you'd want guards inline
+        --               anyway, is a question I cannot answer, Future Me).
+
+        -- `case` expressions
+
+f1 0 = 18
+f1 1 = 15
+f1 2 = 12
+f1 x = 12 - x
+
+-- is equivalent to (actually, it's syntactic sugar for)
+
+f2 x = case x of
+        0 -> 18
+        1 -> 15
+        2 -> 12
+        _ -> 12 - x
+
+-- case expressions can also bind, not just match:
+
+summarizeString :: String -> String
+summarizeString str = case str of
+        (_:[])  -> "Just the character " ++ str
+        (x:xs)  -> [x] ++ "...(" ++ show (length xs) ++ " more characters)"
+        []      -> "Empty string"
+
+-- also, case expressions, as the name would suggest, are expressions. Much like if-statements
+-- they can be put in-line anywhere
+
+
