@@ -1,11 +1,11 @@
--- Lists II (map) --
+                -- Lists II (map) --
 
-        -- Specific:
+-- Specific:
 doubleList :: [Integer] -> [Integer]
 doubleList [] = []
 doubleList (x:xs) = (2 * x) : doubleList xs
 
-        -- More general:
+-- More general:
 multiplyList :: Integer -> [Integer] -> [Integer]
 multiplyList _ [] = []
 multiplyList m (x:xs) = (m * x) : multiplyList m xs
@@ -14,17 +14,17 @@ multiplyList m (x:xs) = (m * x) : multiplyList m xs
          - doubleList = multiplyList 2
          -}
 
-        -- Even more general:
+-- Even more general:
 applyToIntegers :: (Integer -> Integer) -> [Integer] -> [Integer]
 applyToIntegers _ [] = []
 applyToIntegers f (x:xs) = (f x) : applyToIntegers f xs
         --      ^ yes, this function takes another FUNCTION as an argument
         
-        {- And now, multiplyList may be rewritten as:
-         - multiplyList = applyToIntegers ((*) m)
-         - And doubleList as:
-         - doubleList = applyToIntegers ((*) 2)
-         -}
+{- And now, multiplyList may be rewritten as:
+ - multiplyList = applyToIntegers ((*) m)
+ - And doubleList as:
+ - doubleList = applyToIntegers ((*) 2)
+ -}
 
 {-      Interlude: Currying
  - If all this abstraction confuses you, consider a concrete example:
@@ -47,9 +47,9 @@ applyToIntegers f (x:xs) = (f x) : applyToIntegers f xs
  - also the namesake of the Haskell programming language).
  -}
 
-        -- EVEN MORE general:
-        -- Make this polymorphic (so it doesn't have to only apply to Integers)
-        -- Well, actually, Prelude already *has* a function for that - `map`:
+-- EVEN MORE general:
+-- Make this polymorphic (so it doesn't have to only apply to Integers)
+-- Well, actually, Prelude already *has* a function for that - `map`:
 
 {- map :: (a -> b) -> [a] -> [b]
  - map _ [] = []
@@ -72,24 +72,24 @@ myTake n (x:xs) = x : myTake (n-1) xs
 
 
 
--- Lists III (folds, comprehentions) --
+                -- Lists III (folds, comprehentions) --
 
-        -- A fold is a function that takes a data structure and compresses it
-        -- into a single value (or other data structure).
-        -- e.g. `sum`, `product`, `concat`
+-- A fold is a function that takes a data structure and compresses it
+-- into a single value (or other data structure).
+-- e.g. `sum`, `product`, `concat`
 
-        -- Prelude implements two fold functions by default - foldr and foldl.
-        -- There are also *strict* versions of these: foldr' and foldl'
-        -- which force evaluations (instead of being lazy).
-        -- Prelude also implements foldr1 and foldl1, which don't use an explicit
-        -- accumulator, instead simply using the last element of the list.
+-- Prelude implements two fold functions by default - foldr and foldl.
+-- There are also *strict* versions of these: foldr' and foldl'
+-- which force evaluations (instead of being lazy).
+-- Prelude also implements foldr1 and foldl1, which don't use an explicit
+-- accumulator, instead simply using the last element of the list.
 
-        -- Another function implemented in Prelude is `filter`, which takes in
-        -- a function returning a boolean (a condition) and a list, and returns
-        -- a list of items matching the condition.
+-- Another function implemented in Prelude is `filter`, which takes in
+-- a function returning a boolean (a condition) and a list, and returns
+-- a list of items matching the condition.
 
-        -- Comprehensions are then just syntactic sugar for maps and filters
-                -- This stuff: [x^2 | x <- [0..9], x `mod` 2 == 0]
+-- Comprehensions are then just syntactic sugar for maps and filters
+        -- This stuff: [x^2 | x <- [0..9], x `mod` 2 == 0]
 
 returnDivisible :: Int -> [Int] -> [Int]
 returnDivisible 0 _ = error "Cannot divide by zero"
@@ -109,28 +109,28 @@ doubleOfFirstForEvenSeconds ps = map (\x -> 2*(fst x)) $ filter (\x -> snd x `mo
 
 
 
--- Type Declarations --
+                -- Type Declarations --
 
-        -- `data` initialises a new data type
-        -- `type` creates an alias/alternative name for an existing type
+-- `data` initialises a new data type
+-- `type` creates an alias/alternative name for an existing type
 
 data User = Giggoer String String [String] Bool Bool            -- name email bookmarks pretty_mode dark_mode 
           | Venue   String String (Int, Int) Int Bool Bool      -- name email location capacity pretty_mode dark_mode 
 
-        -- Declare a new data type User, which can be either a Giggoer or a Venue (WAD2 ftw).
-        -- A Giggoer *contains* two strings, a string list and two booleans
-        -- A Venue *contains* two strings, an (Int, Int) tuple, an Int and two booleans
+-- Declare a new data type User, which can be either a Giggoer or a Venue (WAD2 ftw).
+-- A Giggoer *contains* two strings, a string list and two booleans
+-- A Venue *contains* two strings, an (Int, Int) tuple, an Int and two booleans
 
-        -- The | separates the possibilities, and the Giggoer... and Venue... are constructor
-        -- functions for the User type.
-        -- Constructors are normal functions and have types:
-                -- *Main> :t Giggoer
-                -- Giggoer :: String -> String -> [String] -> Bool -> Bool -> User
-                -- *Main> :t Venue
-                -- Venue :: String -> String -> (Int, Int) -> Int -> Bool -> Bool -> User
-        -- and return a User
+-- The | separates the possibilities, and the Giggoer... and Venue... are constructor
+-- functions for the User type.
+-- Constructors are normal functions and have types:
+        -- *Main> :t Giggoer
+        -- Giggoer :: String -> String -> [String] -> Bool -> Bool -> User
+        -- *Main> :t Venue
+        -- Venue :: String -> String -> (Int, Int) -> Int -> Bool -> Bool -> User
+-- and return a User
 
-        -- Note: type names and constructors MUST start with a Capital Letter
+-- Note: type names and constructors MUST start with a Capital Letter
 
 giggoer1 = Giggoer "giggoer1" "giggoer1@gmail.com" [] False True
 hydro    = Venue "SSE Hydro" "hydro@sse.co.uk" (0,0) 42 True True
@@ -151,14 +151,14 @@ showUser (Venue name email location capacity pretty_mode dark_mode) =
         ++ ", Dark Mode: " ++ show dark_mode
 
 
--- Control Structures --
+                -- Control Structures --
 
-        -- Skipping over if-statements and guards
-        -- One takeaway: if-statements are expressions, and can be used in-line, anywhere
-        --               whereas guards are NOT expressions (why you'd want guards inline
-        --               anyway, is a question I cannot answer, Future Me).
+-- Skipping over if-statements and guards
+-- One takeaway: if-statements are expressions, and can be used in-line, anywhere
+--               whereas guards are NOT expressions (why you'd want guards inline
+--               anyway, is a question I cannot answer, Future Me).
 
-        -- `case` expressions
+-- `case` expressions
 
 f1 0 = 18
 f1 1 = 15
@@ -185,3 +185,28 @@ summarizeString str = case str of
 -- they can be put in-line anywhere
 
 
+
+                -- More on Functions --
+
+-- sidenote about `let` and `where` - `let` is an expression, so it can be used in-line
+-- whereas `where`, much like guards, is not.
+
+-- Skipping lambdas, been using that already, except that pattern matching also works here:
+
+lamTail = (\ (_:xs) -> xs)
+
+-- functions whose names are only symbols are *operators* and can be used infix be default, e.g.
+
+(/\) :: [Int] -> Int -> [Int]
+xs /\ n = map (n*) xs
+        --     ^ this is a "section", and is essentially syntactic sugar for (\ x -> n * x)
+
+        -- [0..10] /\ 10 == [0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100]
+
+-- infix functions can be used as prefix using (function)
+-- prefix functions can be used as infix using `function`
+
+-- obviously, only functions with exactly 2 arguments can be made infix
+
+f3 xs = map (\ x -> x * 2 + 3) xs
+f4 xs = foldr (\ x y -> read x + y) 1 xs 
