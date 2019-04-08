@@ -210,3 +210,13 @@ xs /\ n = map (n*) xs
 
 f3 xs = map (\ x -> x * 2 + 3) xs
 f4 xs = foldr (\ x y -> read x + y) 1 xs 
+
+
+
+                -- Higher-order Functions --
+
+-- for-loop implementation is Haskell
+for :: a -> (a -> Bool) -> (a -> a) -> (a -> IO ()) -> IO ()
+for i while inc task = do
+        task i
+        if while (inc i) then for (inc i) while inc task else return ()
