@@ -220,3 +220,25 @@ for :: a -> (a -> Bool) -> (a -> a) -> (a -> IO ()) -> IO ()
 for i while inc task = do
         task i
         if while (inc i) then for (inc i) while inc task else return ()
+
+-- Some built-in higher-order functions:
+        -- flip - swaps arguments of 2-argument functions, e.g. (flip (-)) 2 5 == 5 - 2
+        -- (.) - function composition
+        -- ($) - application (apply function to argument); very low precedence
+        -- uncurry - make function that accepts a series of arguments into one that accepts a tuple
+        -- curry - do the opposite
+                -- uncurry :: (a -> b -> c) -> (a, b) -> c
+                -- curry :: ((a, b) -> c) -> a -> b -> c
+
+        -- id - returns the value passed to it
+        -- const - restuns the first value passed to it
+                -- Frequently used as arguments TO higher-order functions (as dummy functions)
+
+myCurry :: ((a,b) -> c) -> a -> b -> c
+myCurry f x y = f (x,y)
+
+myUncurry :: (a -> b -> c) -> (a, b) -> c
+myUncurry f (x,y) = f x y
+
+myConst :: a -> b -> a
+myConst x y = x
