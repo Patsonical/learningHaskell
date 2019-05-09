@@ -54,6 +54,7 @@ find item this@(Branch val left right)
         -- BST Deletion
 
 del :: (Ord a) => Tree a -> Tree a
+del (Branch val NIL NIL)        = NIL
 del (Branch val left NIL)       = left
 del (Branch val NIL right)      = right
 del (Branch val left right)     = Branch min left (delete min right)
