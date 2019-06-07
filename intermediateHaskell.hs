@@ -12,23 +12,22 @@ treeToList (Branch x y) = treeToList x ++ treeToList y
 
 exampleTree = Branch (Leaf 7) (Branch (Leaf 3) (Leaf 4))
 
+        -- Tree Map
+
 treeMap :: (a -> b) -> Tree a -> Tree b
 treeMap f (Leaf x) = Leaf (f x)
 treeMap f (Branch x y) = Branch (treeMap f x) (treeMap f y)
 
 extreeTimesTwo = treeMap (2*) exampleTree
 
-        -- Hmm, that tree only stores data in the leaves...
-        -- Let's make a proper binary tree!
+        -- Tree Fold
 
-data BinTree a = BtLeaf a | Subtree a (BinTree a) (BinTree a) deriving (Show)
+treeFold :: (b -> b -> b) -> (a -> b) -> Tree a -> b
+treeFold fbranch fleaf = g where
+        -- so g `sometree` = treeFold fbranch fleaf `sometree`
+        -- this is to avoid having to write "treeFold fbranch fleaf" repeatedly
+        g (Leaf x) = fleaf x
+        g (Branch left right) = fbranch (g left) (g right)
 
-binTreeMap :: (a -> b) -> BinTree a -> BinTree b
-binTreeMap f (BtLeaf val) = BtLeaf (f val)
-binTreeMap f (Subtree val left right) = Subtree (f val) (binTreeMap f left) (binTreeMap f right)
-
-exampleBinTree = Subtree 2 (Subtree 1 (BtLeaf 5) (BtLeaf 6)) (BtLeaf 4)
-
-ebtTimesTen = binTreeMap (10*) exampleBinTree
-
--- NEXT: TREE FOLDS (or skip that and move onto general maps and folds)
+extreeSum = treeFold (+) id exampleTree         -- id = (\x -> x)
+extreeList = treeFold (++) (: []) exampleTree   -- (: []) = (\x -> [x])
