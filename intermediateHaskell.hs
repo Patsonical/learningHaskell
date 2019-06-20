@@ -31,3 +31,26 @@ treeFold fbranch fleaf = g where
 
 extreeSum = treeFold (+) id exampleTree         -- id = (\x -> x)
 extreeList = treeFold (++) (: []) exampleTree   -- (: []) = (\x -> [x])
+
+        -- General maps and folds
+
+data Weird a b = First a
+               | Second b
+               | Third [(a,b)]
+               | Fourth (Weird a b)
+               deriving (Show)
+
+weirdMap :: (a -> c) -> (b -> d) -> Weird a b -> Weird c d
+weirdMap fa fb = g where
+        g (First x)  = First (fa x)
+        g (Second y) = Second (fb y)
+        g (Third z)  = Third [ (fa x,fb y) | (x,y) <- z ]
+-- or, using map     = Third ( map (\(x,y) -> (fa x,fb y)) z)
+        g (Fourth w) = Fourth (g w)
+
+t1 = First 1
+t2 = Second 'a'
+t3 = Third [(2,'b'),(3,'c'),(4,'d')]
+t4 = Fourth (Second 'e')
+t5 = Fourth (t3)
+tmap = weirdMap (10*) (\x -> "Char: " ++ [x])
