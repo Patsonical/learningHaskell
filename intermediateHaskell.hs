@@ -32,7 +32,7 @@ treeFold fbranch fleaf = g where
 extreeSum = treeFold (+) id exampleTree         -- id = (\x -> x)
 extreeList = treeFold (++) (: []) exampleTree   -- (: []) = (\x -> [x])
 
-        -- General maps and folds
+        -- General Maps
 
 data Weird a b = First a
                | Second b
@@ -54,3 +54,18 @@ t3 = Third [(2,'b'),(3,'c'),(4,'d')]
 t4 = Fourth (Second 'e')
 t5 = Fourth (t3)
 tmap = weirdMap (10*) (\x -> "Char: " ++ [x])
+
+        -- General Folds
+
+weirdFold :: (a -> c) -> (b -> c) -> ([(a,b)] -> c) ->
+             (c -> c) -> Weird a b -> c
+
+weirdFold f1 f2 f3 f4 = g where
+        g (First x)  = f1 x
+        g (Second y) = f2 y
+        g (Third z)  = f3 z
+        g (Fourth w) = f4 (g w)
+
+
+                -- Classes and Types --
+
