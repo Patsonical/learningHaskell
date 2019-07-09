@@ -69,3 +69,28 @@ weirdFold f1 f2 f3 f4 = g where
 
                 -- Classes and Types --
 
+        -- Instantiation
+
+data EqExample = EqEx {x :: Integer, str :: String}
+
+--      Class
+--       \/
+instance Eq EqExample where
+        (EqEx x1 str1) == (EqEx x2 str2) = (x1 == x2) && (str1 == str2)
+--                                              Integer and String are members of Eq
+
+        -- Deriving
+
+data DerExample = DerEx Integer String
+        deriving (Eq, Ord, Show)
+
+-- this automatically generates required functions for Eq Ord and Show
+-- Deriving only works with a couple of built-in classes:
+        -- Eq, Ord, Enum, Bounded, Show, Read
+
+-- Classes can inherit from other classes, meaning that
+-- for something to be an instance of a class, it also
+-- has to be an instance of the parent class.
+-- Classes can inherit from multiple classes.
+
+
