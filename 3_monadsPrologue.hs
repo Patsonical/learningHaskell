@@ -36,7 +36,7 @@ interactiveDouble = do
 -- How are we supposed to apply that???
 -- We would need someFunction :: Maybe (a -> b) -> Maybe a -> Maybe b
 
--- Enter Applicative Functors <*>
+        -- Enter Applicative Functors <*>
 
 -- fmap (+) (Just 3) <*> (Just 4)
 --   > Just 7
@@ -83,4 +83,98 @@ interactiveSum = do
 
 
                 -- IO --
+-- :t getLine
+--   > getLine :: IO String
 
+-- So getLine is a type constructor of the IO type,
+-- with one type variable of type String
+-- So what is the difference between IO String and String?
+
+        -- Sidenote: Referential Transparency
+        -- All expressions in Haskell are 'referentially transparent',
+        -- meaning that any expression in a program can be replaced
+        -- by its value (what it would evaluate to), without changing
+        -- the behaviour of the program.
+
+-- If getLine evaluated to just String, the following could work:
+        -- main = putStrLn (addExclamation getLine)
+        --      where addExclamation s = s ++ "!"
+-- But that doesn't obey referential transparency - we don't know
+-- exactly what "string" getLine will evaluate to. The same applies
+-- to all I/O actions: their results cannot be predicted in advance,
+-- as they depend on some external factors
+
+-- So, getLine being an IO String means that it isn't any string
+-- in particular, but is a placeholder for one, which will be
+-- delivered when the program is run.
+
+-- Dealing with values that aren't there yet may sound weird, however that
+-- is exactly what we did using fmap on Maybe values. fmap will execute
+-- the function IF the value happens to be Just _, rather than Nothing.
+
+-- First off, IO, like Maybe is a Functor, so we can replace the following
+-- code from interactiveSum with fmap (or <$>)
+
+        -- n1 <- getLine
+        -- n2 <- getLine
+        -- let     m1 = readMaybe n1 :: Maybe Double
+        --         m2 = readMaybe n2
+        -- case (+) <$> m1 <*> m2 of
+
+                -- becomes
+
+        -- m1 <- fmap readMaybe getLine
+        -- m2 <- readMaybe <$> getLine
+                -- /\ two ways of writing the same
+        -- case (+) <$> m1 <*> m2 :: Maybe Double of
+
+-- This can be read as 'once getLine delivers a string, apply readMaybe to it'
+
+-- But IO isn't just a Functor, it's also Applicative
+-- Let's use that fact to simplify interactive concatenating:
+
+interactiveConcatLong :: IO ()
+interactiveConcatLong = do
+        putStrLn "Choose two strings:"
+        sx <- getLine
+        sy <- getLine
+        putStrLn "Concatenated:"
+        putStrLn (sx ++ sy)
+
+-- and now using <*>
+
+interactiveConcatMedium :: IO ()
+interactiveConcatMedium = do
+        putStrLn "Choose two strings:"
+        sz <- (++) <$> getLine <*> getLine
+        putStrLn "Concatenated:"
+        putStrLn sz
+
+-- REMEMBER: <*> maintains a consistent order of execution
+-- This gives us the first way to sequence actions in Haskell
+
+-- Sometimes we may want to sequence actions, discarding
+-- the previous output: we can use (\_ y -> y)
+
+-- (\_ y -> y) <$> putStrLn "FIRST" <*> putStrLn "SECOND"
+--    > FIRST
+--    > SECOND
+
+-- In fact, doing this is so common, there is a pattern for it: *>
+        -- (*>) :: Applicative f => f a -> f b -> f b
+
+-- putStrLn "FIRST" *> putStrLn "SECOND"
+--    > FIRST
+--    > SECOND
+
+-- We can use this new pattern to shorten interactiveConcat even further
+
+interactiveConcatShort :: IO ()
+interactiveConcatShort = do
+        sz <- putStrLn "Choose two strings:" *> ((++) <$> getLine <*> getLine)
+        putStrLn "Concatenated:" *> putStrLn sz
+
+-- Note that each *> replaces one of those magical line breaks in the do block
+-- Perhaps they're not so magical after all
+-- The <- still seems quite magical though, how it extracts the value from the
+-- IO context... let's see how that works.
