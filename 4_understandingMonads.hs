@@ -72,3 +72,102 @@ import Control.Monad
 -- functors, and using their monadic counterparts when dealing with monads
 
 
+                -- The Maybe Monad --
+
+        -- Maybe is used in functions which can fail for some inputs
+        -- For instance, log, sqrt, etc. are only defined for positive
+        -- numbers (as far as real numbers are concerned)
+        -- Maybe can let us make safe implementations of those, that
+        -- don't crash when used with negative numbers
+
+safeLog :: (Floating a, Ord a) => a -> Maybe a
+safeLog n
+        | n > 0     = Just (log n)
+        | otherwise = Nothing
+
+safeSqrt :: (Floating a, Ord a) => a -> Maybe a
+safeSqrt n
+        | n >= 0    = Just (sqrt n)
+        | otherwise = Nothing
+
+        -- Monads allow us to combine these functions easily, even
+        -- though their return types are wrapped in a Maybe, and their
+        -- inputs are not:
+
+safeSqrtLog =   safeSqrt <=< safeLog
+        -- Much like the unsafe, non-monadic counterpart:
+unsafeSqrtLog = sqrt . log
+
+        -- Another common use for Maybe is looking up values, for example:
+
+scpDB = [ (173, "Peanut")
+        , (682, "The Hard-to-kill reptile")
+        , (049, "The Plague Doctor")
+        , (096, "The Shy Guy")
+        , (3008, "The Infinite IKEA")
+        , (3000, "Anantashesha")
+        , (500, "Panacea")
+        , (001, "[REDACTED]")
+        ]
+
+        -- The Prelude actually has a lookup function, because this is so common:
+
+-- lookup :: Eq a => a -> [(a, b)] -> Maybe b
+
+scp173  = lookup 173 scpDB  -- Just "Peanut"
+scp3008 = lookup 3008 scpDB -- Just "The Infinite IKEA"
+scp049  = lookup 049 scpDB  -- Just "The Plague Doctor"
+scp2521 = lookup 2521 scpDB -- Nothing
+
+        -- This functionality can be expanded using monads to, for instance,
+        -- look up something else using the value obtained from the first
+        -- lookup (if Nothing is obtained, then the following lookup will
+        -- return Nothing as well, thanks to the implementation of >>= in Maybe)
+
+scpByName = [ ("Peanut", "Euclid")
+            , ("The Hard-to-kill reptile", "Keter")
+            , ("The Plague Doctor", "Euclid")
+            , ("The Shy Guy", "Euclid")
+            , ("The Infinite IKEA", "Euclid")
+            , ("Anantashesha", "Thaumiel")
+            , ("Panacea", "Safe")
+            , ("[REDACTED]", "[REDACTED]")
+            ]
+
+getScpObjectClass :: Int -> Maybe String
+getScpObjectClass n = lookup n scpDB >>= \s -> lookup s scpByName
+
+        -- This could also be written in do-notation, like this:
+
+-- getScpObjectClass n = do
+--      s <- lookup n scpDB
+--      lookup s scpByName
+
+        -- OR
+
+-- getScpObjectClass n = do
+--      s <- lookup n scpDB
+--      c <- lookup s scpByName
+--      return c
+
+        -- If any stage of the computation fails, the entire computation
+        -- is guaranteed to fail (return Nothing ) thanks to the monadic
+        -- nature of Maybe and its implementation of >>=
+
+        -- Another thing Prelude provides is the `maybe` function, which
+        -- allows for supplying default values in case of a Nothing output
+
+-- maybe :: b -> (a -> b) -> Maybe a -> b
+-- e.g.
+
+objClassOf682 = maybe "We don't know" id $ getScpObjectClass 682
+-- returns "Keter"
+objClassOf123 = maybe "We don't know" id $ getScpObjectClass 123
+-- returns "We don't know"
+
+        -- Alternatively, Data.Maybe offers `fromMaybe`, which does the
+        -- same thing, but omitting the function argument, using simply `id`
+
+
+                -- The List Monad --
+
