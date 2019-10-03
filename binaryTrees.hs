@@ -1,6 +1,10 @@
         -- Declaration
 data Tree a = NIL | Branch a (Tree a) (Tree a) deriving (Show)
 
+instance Functor Tree where
+        fmap f NIL = NIL
+        fmap f (Branch a t1 t2) = Branch (f a) (fmap f t1) (fmap f t2)
+
 getVal :: Tree a -> a
 getVal (Branch val _ _) = val
 
