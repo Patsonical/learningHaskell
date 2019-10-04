@@ -171,3 +171,51 @@ objClassOf123 = maybe "We don't know" id $ getScpObjectClass 123
 
                 -- The List Monad --
 
+-- Lists embody nondeterminism: functions using the List monad can output
+-- an arbitrary number of results (0, 1, 2, or more), just as functions
+-- using the Maybe monad can output 0 or one result.
+
+-- List return makes a list containing the one element:
+-- return x = [x]
+-- return :: a -> [a]   OR      return :: a -> [] a
+-- just to make it obvious that this is a monad ^
+
+-- (>>=) is more tricky
+-- (>>=) :: [a] -> (a -> [b]) -> [b]
+-- What it actually does is it maps the (a -> [b]) function over a and then
+-- concatenates the resulting list of lists [[b]] -> [b], so
+-- xs >>= f = concat (map f xs)
+
+        -- Example: replicating bunnies
+generation :: a -> [a]
+generation = replicate 3
+
+bunny = ["bunny"]
+bunny1 = bunny >>= generation
+-- ["bunny, "bunny, "bunny]
+bunny2 = bunny >>= generation >>= generation
+-- ["bunny", "bunny", "bunny", "bunny", "bunny", "bunny", "bunny", "bunny", "bunny"]
+bunny3 = bunny >>= generation >>= generation >>= generation
+-- You get the picture: lots of bunnies
+
+-- This may be a silly example, but this can be used to model any process
+-- that generates a series of outputs from a single input, e.g.
+-- radioactive decay, chemical reactions, etc.
+
+-- By definition, since List is a monad, it is also a functor, and applicative:
+
+apList = (*) <$> [1,2,3] <*> [10,100,1000]
+-- apList = [10, 20, 30, 100, 200, 300, 1000, 2000, 3000]
+-- So <*> applies the fmapped function to every combination of elements,
+-- much like a Cartesian Product
+
+-- fs <*> xs = concatMap (\f -> map f xs) fs
+-- So it turns the first list into a list of functions, and then applies
+-- all of these functions to each of the second list's elements, and then
+-- concatenates the whole thing (concatMap, is just concat (map f xs), exactly
+-- like the list's (>>=) operator, just with different syntactic order)
+
+
+                -- do Notation --
+
+
