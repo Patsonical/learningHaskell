@@ -1,4 +1,4 @@
-import Data.Char (toUpper)
+import Data.Char (toUpper, toLower)
 import Control.Monad
 
                 -- Understanding Monads --
@@ -292,5 +292,57 @@ ioAndUpper = thisIsIOString >>= putStrLn . (map toUpper)
 
 
                 -- The IO Monad --
+
+-- Actions =/= Functions
+-- The IO type constructor provides a way to represent actions as Haskell values
+-- These actions can then be manipulated with pure functions
+
+        -- Monadic Control Structures
+-- How to repeat IO (or any other monadic) actions?
+
+fiveGetLinesWrong = replicate 5 getLine
+-- This will not work, because this creates a list of IO actions, not
+-- an IO action that returns a string, i.e. [IO String] rather than IO [String]
+-- What we need is to fold this list of IO actions, execute each one, and then
+-- put all the *results* into a list. For that we have `sequence`
+
+-- sequence :: (Monad m) => [m a] -> m [a]
+-- So the desired function would look like this:
+
+fiveGetLines = sequence $ replicate 5 getLine
+
+-- Since replicate and sequence make such a perfect combination, Control.Monad
+-- provides a function that combines the two: `replicateM`
+
+fiveGetLinesAlt = replicateM 5 getLine
+
+-- Another useful monadic version of a function is `mapM`, which joins `map` and
+-- `sequence`, which makes actions from a list of values, and collects results
+
+-- mapM :: (Monad m) => (a -> m b) -> [a] -> m [b]
+-- e.g.
+
+fToMap :: String -> IO String
+fToMap x = (putStrLn . map toUpper) x >> (return . map toLower) x
+
+putUpperReturnLower :: [String] -> IO [String]
+putUpperReturnLower = mapM fToMap
+
+tryThis :: IO [String]
+tryThis = putUpperReturnLower ["This", "List", "Of", "Strings"]
+
+-- These functions also have special "underscored" versions: `sequence_`,
+-- `replicateM_` and `mapM_`. These basically just discard the final value,
+-- which is good for simply sequencing actions, without collecting values.
+-- (works just like >> does for >>=)
+-- There is also `forM` and `forM_`, which are argument-flipped
+-- versions of `mapM` and `mapM_`, respectively
+-- forM :: (Monad m) => [a] -> (a -> m b) -> m [b]
+
+printList :: (Show a) => [a] -> IO ()
+printList = mapM_ (putStrLn . show)
+
+
+                -- The State Monad --
 
 
