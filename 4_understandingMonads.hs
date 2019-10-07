@@ -1,3 +1,4 @@
+import Data.Char (toUpper)
 import Control.Monad
 
                 -- Understanding Monads --
@@ -217,5 +218,79 @@ apList = (*) <$> [1,2,3] <*> [10,100,1000]
 
 
                 -- do Notation --
+
+-- do Notation in Haskell is syntactic sugar for monadic operations,
+-- making code more readable by translating >>= and >> (etc.) operators
+-- into an imperative-like style
+
+        -- then >>
+thenEg = putStr "Hello" >>
+         putStr " " >>
+         putStr "World" >>
+         putStrLn "!"
+-- Could be rewritten as
+dothenEg = do {
+         putStr "Hello";
+         putStr " ";
+         putStr "World"; 
+         putStrLn "!";
+         }
+-- The explicit {} and ; can be omitted for the most part
+
+        -- bind >>=
+bindEg = putStr "What is your name? " >>
+         getLine >>= \x ->
+         putStrLn $ "Hello " ++ x ++ "!"
+-- Could be rewritten as
+dobindEg = do
+         putStr "What is your name? "
+         x <- getLine
+         putStrLn $ "Hello " ++ x ++ "!"
+-- Omitted {} and ; here
+-- Explicit {} and ; allows for the use of do notation on a single line
+-- Simply using >> and >>= can also be used on a single line
+
+-- In these examples, getLine has type IO String. x, on the other hand
+-- has type String, which allows for things like joining with (++) and
+-- printing with putStrLn, which has type String -> IO ()
+
+        -- The fail method
+-- do notation does add one thing on top of just being syntactic sugar: fail
+-- do notation allows us to use pattern matching, e.g.
+-- do { Just x1 <- action1 }
+
+-- What fail allows us to do, is to explicitly raise an error on a
+-- pattern-match failure. fail takes a String, and allows the programmer
+-- to specify a more descriptive message than just
+-- "pattern match failure somewhere"
+
+thisWillFail :: IO ()
+thisWillFail = do fail "My Error Message"
+
+-- fail is rarely used directly, and usually it is best to rely on automatic
+-- handling of pattern-match failures for a given monad
+
+-- The last line in a do block, or in a sequence of monadic code, is what
+-- the output of the function will be. If we want to do something (e.g.
+-- print a line to the console as the last thing, but have the function
+-- evaluate to something else, we can make the last line `return xyz`.
+-- return is not like in other languages, all it does is bring xyz into
+-- the monad, so that the return types match, so the function actually
+-- evaluates to `return xyz`, not just xyz.
+-- For example, a function terminating with a `putStrLn myString` would have
+-- type IO (), whereas if we add `return myString`, it'll have type IO String
+
+thisIsIO :: IO ()
+thisIsIO = putStrLn "This is just IO ()"
+
+thisIsIOString :: IO String
+thisIsIOString = putStrLn x >> return x
+        where x = "This is IO String"
+
+ioAndUpper :: IO ()
+ioAndUpper = thisIsIOString >>= putStrLn . (map toUpper)
+
+
+                -- The IO Monad --
 
 
