@@ -1,5 +1,7 @@
 import Data.Char (toUpper, toLower)
 import Control.Monad
+import Control.Monad.Trans.State
+import System.Random
 
                 -- Understanding Monads --
 
@@ -345,4 +347,157 @@ printList = mapM_ (putStrLn . show)
 
                 -- The State Monad --
 
+-- In Haskell, global state is tricky, because functions are meant to be pure
+-- The solution to this is to pass the state explicitely between function calls
+-- Case Study: (Pseudo) Random Numbers
+
+-- System.Random provides a random number generator, that can supply random
+-- numbers by storing the state outside the program: `randomIO` and `randomRIO`
+
+-- randomIO :: Random a => IO a
+-- randomRIO :: Random a => (a,a) -> IO a
+
+-- e.g. rolling two dice
+
+rollDiceIO :: IO (Int, Int)
+rollDiceIO = (,) <$> (randomRIO (1,6)) <*> (randomRIO (1,6))
+-- or      = liftA2 (,) (randomRIO (1,6)) (randomRIO (1,6))
+-- where     liftA2 f u v = f <$> u <*> v
+
+rollNDiceIO :: Int -> IO [Int]
+rollNDiceIO n = replicateM n (randomRIO (1,6))
+
+        -- Getting rid of IO
+
+generator :: StdGen
+generator = mkStdGen 0          -- 0 is the seed
+-- generator
+-- 1 1
+
+-- random :: (RandomGen g, Random a) => g -> (a, g)
+
+firstRandom = random generator :: (Int, StdGen)
+-- We could change the Int in the type annotation to anything though
+
+-- Now rolling two dice without IO
+rollDiceClumsy :: (Int, Int)
+rollDiceClumsy = (n, m)
+        where   (n, g) = randomR (1,6) (mkStdGen 0)
+                (m, _) = randomR (1,6) g
+
+-- And here, with the ability to pass in a generator, instead of using mkStdGen 0
+rollDiceClumsy' :: StdGen -> ((Int, Int), StdGen)
+rollDiceClumsy' g = ((n, m), g2)
+        where   (n, g1) = randomR (1,6) g
+                (m, g2) = randomR (1,6) g1
+
+randomRoll1 = rollDiceClumsy' generator
+randomRoll2 = rollDiceClumsy' $ snd randomRoll1
+randomRoll3 = rollDiceClumsy' $ snd randomRoll2
+
+-- This is clumsy, because we manually pass the generator state
+-- What we need is an automatic way to extract this second value - the new
+-- generator - and pass it to the next function. That is where State comes in.
+
+        -- This is also where it gets weird...
+
+-- newtype State s a = State { runState :: s -> (a, s) }
+-- This `State` data type doesn't really contain a state per se,
+-- what it contains is a *state processor*
+-- runState is the *accessor*, which eliminates the need for pattern-matching
+-- to access the wrapped state processor
+
+-- `newtype` is used instead of `data` when the type has only one constructor
+-- and only one field (as is the case with State). This makes it easier for
+-- the compiler to trivialise wrapping and unwrapping the single field.
+
+-- This "state processor" stuff is a little confusing, maybe this will help:
+--      "Normal" passing of state:
+--      (a,s) -> (b,s)
+--      Another way:
+--      a -> s -> (b,s)
+--      or
+--      a -> (s -> (b,s))
+
+-- state :: (s -> (a, s)) -> State s a
+-- State gets weirder - it doesn't explicitely use the `State` type constructor
+-- instead, the Control.Monad.Trans.State (transformers) package implements
+-- the state type in a different way, albeit that does not change the way it
+-- is used or understood, with the exception that instead of using the `State`
+-- constructor directly, we use the function `state` to make our state processor
+-- This weirdness will be addressed a few chapters down, don't worry.
+
+        -- For every type `s`, State s can be made a Monad instance
+        --      *not* State itself, *State s*
+        -- where s can be any type - String, Char, Int, what have you
+        -- This is because State takes *two* type parameters, not one
+        -- Therefore State itself cannot be made an instance of Monad
+        -- However, we need only one general definition to cover them all
+
+-- instance Functor (State s) where
+--      fmap  = Control.Monad.liftM
+-- 
+-- instance Applicative (State s) where
+--      pure  = return
+--      (<*>) = Control.Monad.ap
+-- 
+-- instance Monad (State s) where
+--      return :: a -> State s a
+--      return x = state (\s -> (x, s))
+--
+--      (>>=) :: State s a -> (a -> State s b) -> State s b
+--      p >>= k = State $ \ s0 ->
+--              let (x, s1) = runState p s0
+--              in runState (k x) s1
+
+        -- Setting and accessing state
+-- put newState = State $ \_ -> ((), newState)
+--      this creates a new state processor from a value, that ignores its input
+-- get = State $ \s (s, s)
+--      this returns the unchanged state as both the value and the next state
+--      allowing it to be manipulated, and used in subsequent calls
+-- evalState :: State s a -> s -> a
+-- evalState p s = fst (runState p s)
+--      this will just give back the new value of the state processor
+-- execState :: State s a -> s -> s
+-- execState p s = snd (runState p s)
+--      this will just give back the new state
+
+        -- Now applying this to the dice roll
+-- The type of the state processors will be State StdGen Int
+--                                  A.K.A. (StdGen -> (Int, StdGen))
+
+-- randomR :: (Random a, RandomGen g) => (a, a) -> g -> (a, g)
+-- In our case, the type is (Int, Int) -> StdGen -> (Int, StdGen)
+--                       or (Int, Int) -> State StdGen Int
+--                                        (minus the wrapping/unwrapping)
+
+rollDie :: State StdGen Int
+rollDie = state $ randomR (1,6)
+
+rollDieVerbose :: State StdGen Int
+rollDieVerbose = do generator <- get
+                    let (val, newGen) = randomR (1,6) generator
+                    put newGen
+                    return val
+
+rollDieVerbose' :: State StdGen Int
+rollDieVerbose' = get >>= \ generator ->
+                  let (val, newGen) = randomR (1,6) generator
+                  in put newGen >> return val
+
+-- e.g. evalState rollDie (mkStdGen 0) = 6
+-- same as  randomR (1,6) (mkStdGen 0) = 6
+
+rollDice = (,) <$> rollDie <*> rollDie
+-- evalState rollDice (mkStdGen 7) = (6,1)
+
+rollNDice :: Int -> State StdGen [Int]
+rollNDice n = replicateM n rollDie
+-- evalState (rollNDice 4)  (mkStdGen 0) = [6,6,4,1]
+-- evalState (rollNDice 7)  (mkStdGen 0) = [6,6,4,1,5,2,4]
+-- evalState (rollNDice 12) (mkStdGen 5) = [6,2,2,1,3,2,5,1,5,4,2,2]
+
+
+                -- Alternative and MonadPlus --
 
