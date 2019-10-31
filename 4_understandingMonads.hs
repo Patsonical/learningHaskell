@@ -1,6 +1,9 @@
 import Data.Char (toUpper, toLower)
 import Control.Monad
 import Control.Monad.Trans.State
+import Control.Applicative
+import Data.Foldable (asum)
+import Data.Function ((&))
 import System.Random
 
                 -- Understanding Monads --
@@ -500,4 +503,69 @@ rollNDice n = replicateM n rollDie
 
 
                 -- Alternative and MonadPlus --
+
+-- Alternative (from Control.Applicative), is a subclass of Applicative
+-- used to combine the effects of two computations into a single one.
+-- It defines two functions:
+-- class Applicative f => Alternative f where
+--      empty :: f a               : applicative computation with zero results
+--      (<|>) :: f a -> f a -> f a : combines two applicative computations
+
+        -- Example Instances:
+-- Maybe
+-- instance Alternative Maybe where
+--      empty               = Nothing
+--      Nothing <|> Nothing = Nothing : Zero results
+--      Just x  <|> Nothing = Just x  : One result
+--      Nothing <|> Just y  = Just y  : One result
+--      Just x  <|> Just y  = Just x  : Still one result (discards the second)
+--                                      since Maybe can only hold one value
+
+-- List
+-- instance Alternative [] where
+--      empty = []
+--      (<|>) = (++)
+
+        -- Example Use: Parsing
+
+-- Checks if a string starts with a certain digit
+digit :: Int -> String -> Maybe Int
+digit _ []    = Nothing
+digit i (c:_) = if i > 9 || i < 0 then Nothing else
+                if [c] == show i  then Just i  else Nothing
+
+-- Checks if the digit at the start is a 0 or a 1 (runs two parsers in parallel)
+binChar :: String -> Maybe Int
+binChar s = digit 0 s <|> digit 1 s
+
+
+-- MonadPlus is to monads what Alternative is to applicative functors
+-- class Monad m => MonadPlus m where
+--      mzero :: m a
+--      mplus :: m a -> m a -> m a
+
+-- For types which are instances of both Alternative and MonadPlus,
+-- mzero and mplus should be equivalent to empty and <|> respectively
+
+-- asum / msum: These fold lists of Alternative or MonadPlus values using <|>
+
+-- Here is an example of checking a list of strings whether they
+-- start with 1, 2, or 3
+char123 :: String -> Maybe Int
+char123 s = asum $ digit <$> [1,2,3] <*> [s]
+each123 :: [String] -> [Maybe Int]
+each123 = fmap char123
+
+-- And here it is, generalised to any number of starting Ints
+charNum :: [Int] -> String -> Maybe Int
+charNum ints s = asum $ digit <$> ints <*> [s]
+eachNum :: [Int] -> [String] -> [Maybe Int]
+eachNum = fmap . charNum
+--             ^ this is needed, because fmap expects a function with one argument
+--               and charNum has two: [Int] and String
+--               each123 doesn't need this because char123 only expects String
+
+        -- Now
+        -- each123 = eachNum [1,2,3] = fmap (charNum [1,2,3])
+        --                      (notice how this doesn't need .)
 
