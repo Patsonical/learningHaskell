@@ -1,4 +1,4 @@
-import Data.Char (toUpper, toLower)
+import Data.Char (toUpper, toLower, isAlpha, isNumber, isPunctuation)
 import Control.Monad
 import Control.Monad.Trans.State
 import Control.Applicative
@@ -569,3 +569,59 @@ eachNum = fmap . charNum
         -- each123 = eachNum [1,2,3] = fmap (charNum [1,2,3])
         --                      (notice how this doesn't need .)
 
+
+                -- Monad Transformers --
+
+-- Monad Transformers allow us to combine two monads into a
+-- single one that shares the behaviour of both
+
+-- e.g. IO + Maybe: Password Validation
+
+isValid :: String -> Bool
+isValid s = length s >= 8
+         && any isAlpha s
+         && any isNumber s
+         && any isPunctuation s
+
+        -- without monad transformers:
+
+getPassNT :: IO (Maybe String)
+getPassNT = getLine >>= \s ->
+            if isValid s
+            then return $ Just s
+            else return Nothing
+        -- Notice: Maybe isn't actually being used as a monad, this is a function
+        --         in the IO monad that happens to return a Maybe value
+
+askPassNT :: IO ()
+askPassNT = putStr "Enter password: " >>
+            getPassNT >>= \maybe_pass ->
+            case maybe_pass of
+                 Just pass -> do putStrLn "Password secure."
+                 Nothing   -> do putStrLn "Password NOT secure."
+        -- And a follow-up function still has to do pattern matching to check
+        -- the Maybe, which is exactly what monads are supposed to save us from
+
+
+        -- WITH monad transformers
+
+-- MaybeT is a wrapper around m (Maybe a), where m can be any monad (e.g. IO)
+newtype MaybeT m a = MaybeT { runMaybeT :: m (Maybe a) }
+
+instance Monad m => Monad (MaybeT m) where
+        return = MaybeT . return . Just
+        --     = MaybeT . return . return
+        --    constructor    m     Maybe
+        
+        -- (>>=) :: MaybeT m a -> (a -> MaybeT m b) -> MaybeT m b
+        x >>= f = MaybeT $ runMaybeT x >>= \maybeVal ->
+                           case maybeVal of
+                                Nothing  -> return Nothing
+                                Just val -> runMaybeT $ f val
+
+instance Monad m => Applicative (MaybeT m) where
+        pure = return
+        (<*>) = ap
+
+instance Monad m => Functor (MaybeT m) where
+        fmap = liftM
