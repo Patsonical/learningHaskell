@@ -1,5 +1,6 @@
 import Data.Char (toUpper, toLower, isAlpha, isNumber, isPunctuation)
 import Control.Monad
+import Control.Monad.Trans
 import Control.Monad.Trans.State
 import Control.Applicative
 import Data.Foldable (asum)
@@ -614,10 +615,20 @@ instance Monad m => Monad (MaybeT m) where
         --    constructor    m     Maybe
         
         -- (>>=) :: MaybeT m a -> (a -> MaybeT m b) -> MaybeT m b
+        --          unwrap x into m (Maybe a)
+        --                    \/
         x >>= f = MaybeT $ runMaybeT x >>= \maybeVal ->
+        --                              ^ m's bind operator
                            case maybeVal of
-                                Nothing  -> return Nothing
-                                Just val -> runMaybeT $ f val
+                                Nothing  -> return Nothing -- return Nothing into m
+                                Just val -> runMaybeT $ f val -- put result of f val
+                                                              -- back into the m monad
+
+-- This may look complicated, but it's the same as >>= for Maybe:
+--      maybeVal >>= f = case maybeVal of
+--                            Nothing  -> Nothing
+--                            Just val -> f val
+-- plus a whole bunch of wrapping and unwrapping
 
 instance Monad m => Applicative (MaybeT m) where
         pure = return
@@ -625,3 +636,103 @@ instance Monad m => Applicative (MaybeT m) where
 
 instance Monad m => Functor (MaybeT m) where
         fmap = liftM
+
+-- This is all that is needed to define the transformer,
+-- but the following instances can also be quite convenient:
+
+instance Monad m => Alternative (MaybeT m) where
+        empty   = MaybeT $ return Nothing
+        x <|> y = MaybeT $ runMaybeT x >>= \maybeVal ->
+                           case maybeVal of
+                                Nothing -> runMaybeT y
+                                Just _  -> return maybeVal
+
+instance Monad m => MonadPlus (MaybeT m) where
+        mzero = empty
+        mplus = (<|>)
+
+instance MonadTrans MaybeT where
+        lift = MaybeT . (liftM Just)
+
+-- Alternative and MonadPlus instances are good ideas because Maybe has those instances
+-- MonadTrans implements `lift`, which can take functions
+-- from the m monad and bring them into MaybeT m
+
+        -- Now that setup is done, let's implement the getPass and askPass with MaybeT
+
+getPassT :: MaybeT IO String
+getPassT = lift getLine >>= \s ->
+           guard (isValid s) >> -- Alternative provides `guard`
+           return s
+
+askPassT :: MaybeT IO ()
+askPassT = (lift $ putStr "Enter password: ") >>
+           getPassT >>= \val ->
+           lift $ putStrLn "Password secure."
+
+        -- NOTE: These won't work in GHCi, because it tries to "Show" the result,
+        --       which fails because MaybeT m does not have a Show instance
+        --       and IDK how to implement it, oh well.
+
+-- The `transformers` package supplies many pre-defined transformers,
+-- including MaybeT (Control.Monad.Trans.Maybe)
+-- When referring to monad transformers, the terms 'precursor' and 'base' monad are used
+--      precursor monad - the non-transformer monad (e.g. Maybe in MaybeT IO)
+--      base monad      - the other monad (e.g. IO in MaybeT IO)
+
+
+        -- Lifting (Do you even `lift` bro?)
+
+-- We've already seen the `liftM` function, which is essentially `fmap` for monads
+-- liftM :: Monad m => (a -> b) -> m a -> m b
+--      or alternatively
+-- liftM :: Monad m => (a -> b) -> (m a -> m b)
+-- It converts a normal function into one that acts within m
+-- So "lifting" refers to bringing something into something else, in this case,
+-- bringing a function into a monadic context. It allows the easy application of
+-- plain funtions to monadic values, without needing do-blocks or bind-notation:
+
+monadicValue = Just 5
+f = (10*)
+
+-- bind:
+x = monadicValue >>= \v -> return (f v)
+-- do-notation:
+y = do v <- monadicValue
+       return (f v)
+-- liftM:
+z = liftM f monadicValue
+-- x == y == z == Just 50
+
+-- `lift` (not M) plays a similar role in monad transformers - it brings (or "promotes")
+-- computations in the base monad into the combined monad. `lift` is the single method
+-- of the MonadTrans class (Control.Monad.Trans.Class), which all monad transformers are
+-- instances of (and thus can use `lift`).
+
+-- class MonadTrans t where
+--      lift :: (Monad m) => m a -> t m a
+
+-- There is also a dedicated variant for IO operations - liftIO: the single method
+-- of the MonadIO class (Control.Monad.IO.Class)
+
+-- class (Monad m) => MonadIO m where
+--      liftIO :: IO a -> m a
+
+-- This can be convenient when stacking multiple monad transformations. In these cases,
+-- IO is always the innermost monad, so multiple `lift`s are usually needed to bring
+-- IO values to the top of the stack. `liftIO` is defined such that it can bring an IO
+-- value to the top from any depth in a single function.
+
+        -- Implementing `lift`
+-- This is usually pretty straightforward. Consider lift for MaybeT:
+
+-- instance MonadTrans MaybeT where
+--         lift m = MaybeT (liftM Just m)
+
+        -- or, as defined previously:
+
+-- instance MonadTrans MaybeT where
+--         lift = MaybeT . (liftM Just)
+
+-- We use liftM and Just to turn m a into m (Maybe a), and then we just (pun intended)
+-- wrap it with the MaybeT constructor. Note that liftM works in the *base* monad.
