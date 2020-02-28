@@ -41,7 +41,7 @@ import System.Random
 -- let x = foo in (x+3)     ->      foo & (\x -> id (x+3))       (v & f == f v)
 -- x <- foo; return (x+3)   ->      foo >>= (\x -> return (x+3))
 --   ^ In a do-block
--- & combines two pure calculations: foo and id
+--  &  combines two pure calculations:   foo and id
 -- >>= combines two computational steps: foo and return
 
         -- Common Monads:
@@ -631,7 +631,7 @@ instance Monad m => Monad (MaybeT m) where
 -- plus a whole bunch of wrapping and unwrapping
 
 instance Monad m => Applicative (MaybeT m) where
-        pure = return
+        pure  = return
         (<*>) = ap
 
 instance Monad m => Functor (MaybeT m) where
@@ -679,6 +679,7 @@ askPassT = (lift $ putStr "Enter password: ") >>
 -- When referring to monad transformers, the terms 'precursor' and 'base' monad are used
 --      precursor monad - the non-transformer monad (e.g. Maybe in MaybeT IO)
 --      base monad      - the other monad (e.g. IO in MaybeT IO)
+
 
 
         -- Lifting (Do you even `lift` bro?)
@@ -736,3 +737,41 @@ z = liftM f monadicValue
 
 -- We use liftM and Just to turn m a into m (Maybe a), and then we just (pun intended)
 -- wrap it with the MaybeT constructor. Note that liftM works in the *base* monad.
+
+
+        -- Exercise: Implementing IdentityT
+
+-- Identity is a trivial functor defined in Data.Functor.Identity as such:
+newtype Identity a = Identity { runIdentity :: a }
+
+instance Monad Identity where
+        return a = Identity a
+        m >>= k  = k (runIdentity m)
+
+instance Applicative Identity where
+        pure  = return
+        (<*>) = ap
+
+instance Functor Identity where
+        fmap = liftM
+
+-- Implement IdentityT which would wrap m a values rather than a
+newtype IdentityT m a = IdentityT { runIdentityT :: m (Identity a) }
+
+instance Monad m => Monad (IdentityT m) where
+        return  = IdentityT . return . Identity
+        --(>>=) :: IdentityT m a -> (a -> IdentityT m b) -> IdentityT m b
+        x >>= f = IdentityT $ runIdentityT x >>= \ival ->
+                              case ival of
+                                   Identity a -> runIdentityT $ f a
+
+instance Monad m => Applicative (IdentityT m) where
+        pure  = return
+        (<*>) = ap
+
+instance Monad m => Functor (IdentityT m) where
+        fmap = liftM
+
+instance MonadTrans IdentityT where
+        lift = IdentityT . (liftM Identity)
+
